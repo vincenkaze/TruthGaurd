@@ -11,13 +11,33 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); 
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+
+    if (!validateForm()) return;
+
+    setErrors({});
     setIsLoading(true);
 
     try {
@@ -25,7 +45,8 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
       localStorage.removeItem("predict_count");
       if (onSuccess) onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      // If backend returns error, map it to password field
+      setErrors({ password: err instanceof Error ? err.message : "Login failed" });
       setPassword("");
     } finally {
       setIsLoading(false);
@@ -33,9 +54,7 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit}>
-      {error && <div className="alert alert-error">{error}</div>}
-
+    <form className="auth-form" onSubmit={handleSubmit} noValidate>
       <div className="form-group">
         <label htmlFor="email">Email address</label>
         <input
@@ -43,11 +62,11 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
           type="email"
           name="email"
           placeholder="Enter your email"
-          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="input-field"
         />
+        {errors.email && <p className="error-text">{errors.email}</p>}
       </div>
 
       {/* Password with eye toggle */}
@@ -58,7 +77,6 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
           type={showPassword ? "text" : "password"}
           name="password"
           placeholder="Enter your password"
-          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="input-field"
@@ -69,6 +87,7 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
           className="password-toggle"
           onClick={() => setShowPassword(!showPassword)}
         />
+        {errors.password && <p className="error-text">{errors.password}</p>}
       </div>
 
       <div className="form-options">
