@@ -1,5 +1,5 @@
 -- Drop all existing related tables (for reset)
-drop table if exists feedback, analysis, articles, sources, users, admins cascade;
+drop table if exists feedback, analysis, articles, sources, users cascade;
 
 -- ========================
 -- 1. SOURCES
